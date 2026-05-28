@@ -11,9 +11,14 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./integration": {
+      "types": "./src/integration.ts",
+      "default": "./src/integration.ts"
     }
   },
   "peerDependencies": {
+    "astro": "^4 || ^5",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
   },
@@ -21,6 +26,7 @@
     "@types/node": "^25.9.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "astro": "^6.3.8",
     "typescript": "^5.7.0"
   },
   "dependencies": {
