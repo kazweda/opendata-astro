@@ -40,9 +40,10 @@ export interface OpenDataChartProps {
   dataSet: DataSet;
   chartType?: ChartType;
   title?: string;
+  height?: string;
 }
 
-export function OpenDataChart({ dataSet, chartType = 'bar', title }: OpenDataChartProps) {
+export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400px' }: OpenDataChartProps) {
   const chartData = {
     labels: dataSet.labels,
     datasets: dataSet.series.map((s, i) => ({
@@ -56,13 +57,21 @@ export function OpenDataChart({ dataSet, chartType = 'bar', title }: OpenDataCha
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: 'top' as const },
       ...(title ? { title: { display: true, text: title } } : {}),
     },
   };
 
-  if (chartType === 'line') return <Line data={chartData} options={options} />;
-  if (chartType === 'pie') return <Pie data={chartData} options={options} />;
-  return <Bar data={chartData} options={options} />;
+  const chart =
+    chartType === 'line' ? <Line data={chartData} options={options} /> :
+    chartType === 'pie' ? <Pie data={chartData} options={options} /> :
+    <Bar data={chartData} options={options} />;
+
+  return (
+    <div style={{ position: 'relative', height, width: '100%' }}>
+      {chart}
+    </div>
+  );
 }
