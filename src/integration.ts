@@ -10,7 +10,8 @@ export interface DatasetConfig<P = Record<string, string>> {
 }
 
 export interface OpenDataIntegrationOptions {
-  datasets: DatasetConfig<Record<string, string>>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  datasets: DatasetConfig<any>[];
   /** JSON の出力先（デフォルト: `src/data/opendata-astro`） */
   outDir?: string;
 }
