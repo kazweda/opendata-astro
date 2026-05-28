@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,7 +44,25 @@ export interface OpenDataChartProps {
   height?: string;
 }
 
+function useDarkMode(): boolean {
+  const [isDark, setIsDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.dataset['theme'] === 'dark',
+  );
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.dataset['theme'] === 'dark');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+  return isDark;
+}
+
 export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400px' }: OpenDataChartProps) {
+  const isDark = useDarkMode();
+  const textColor = isDark ? '#cbd5e1' : '#374151';
+  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
   const chartData = {
     labels: dataSet.labels,
     datasets: dataSet.series.map((s, i) => ({
@@ -59,14 +78,18 @@ export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'top' as const },
-      ...(title ? { title: { display: true, text: title } } : {}),
+      legend: { position: 'top' as const, labels: { color: textColor } },
+      ...(title ? { title: { display: true, text: title, color: textColor } } : {}),
+    },
+    scales: {
+      x: { ticks: { color: textColor }, grid: { color: gridColor } },
+      y: { ticks: { color: textColor }, grid: { color: gridColor } },
     },
   };
 
   const chart =
     chartType === 'line' ? <Line data={chartData} options={options} /> :
-    chartType === 'pie' ? <Pie data={chartData} options={options} /> :
+    chartType === 'pie' ? <Pie data={chartData} options={options as object} /> :
     <Bar data={chartData} options={options} />;
 
   return (
