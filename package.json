@@ -1,11 +1,12 @@
 {
   "name": "opendata-astro",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "type": "module",
   "description": "Open data chart components for Astro, fetching data at build time.",
   "license": "MIT",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "exports": {
     ".": {
@@ -27,7 +28,8 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "astro": "^6.3.8",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.7"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
