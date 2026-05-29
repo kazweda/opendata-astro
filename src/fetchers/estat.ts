@@ -4,6 +4,8 @@ export interface EStatParams {
   statsDataId: string;
   /** 絞り込む分類コード（例: { cat01: '001' }） */
   classFilters?: Record<string, string>;
+  /** 系列軸として使う CLASS_OBJ の @id（例: 'area'）。省略時は時間以外の最初の軸を使用 */
+  seriesKey?: string;
 }
 
 // e-Stat API v3 レスポンスの必要部分だけ型定義
@@ -68,10 +70,10 @@ export class EStatFetcher implements DataFetcher<EStatParams> {
     }
 
     const json = (await res.json()) as EStatResponse;
-    return this.transform(json);
+    return this.transform(json, params.seriesKey);
   }
 
-  private transform(json: EStatResponse): DataSet {
+  private transform(json: EStatResponse, seriesKey?: string): DataSet {
     const statData = json.GET_STATS_DATA.STATISTICAL_DATA;
     const classObjs = toArray(statData.CLASS_INF.CLASS_OBJ);
     const values = toArray(statData.DATA_INF.VALUE);
@@ -82,8 +84,10 @@ export class EStatFetcher implements DataFetcher<EStatParams> {
     const labels = timeClasses.map((c) => c['@name']);
     const timeCodes = timeClasses.map((c) => c['@code']);
 
-    // 時間以外の最初の分類軸を系列に使用
-    const seriesObj = classObjs.find((o) => o['@id'] !== 'time');
+    // seriesKey 指定があればその軸、なければ時間以外の最初の分類軸を系列に使用
+    const seriesObj = seriesKey
+      ? classObjs.find((o) => o['@id'] === seriesKey)
+      : classObjs.find((o) => o['@id'] !== 'time');
     const seriesClasses = seriesObj ? toArray(seriesObj.CLASS) : [{ '@code': '', '@name': '値', '@level': '1' }];
     const catKey = seriesObj ? (`@${seriesObj['@id']}` as keyof EStatValue) : null;
 
