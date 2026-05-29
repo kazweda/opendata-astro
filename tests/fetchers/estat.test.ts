@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { EStatFetcher } from './estat';
+import { EStatFetcher } from '../../src/fetchers/estat';
 
 // cat01（性別）が area より先に来るレスポンスを模擬
 const mockResponse = {
