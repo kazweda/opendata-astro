@@ -65,13 +65,13 @@ export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400
 
   const chartData = {
     labels: dataSet.labels,
-    datasets: dataSet.series.map((s, i) => ({
-      label: s.name,
-      data: s.values,
-      backgroundColor: COLORS[i % COLORS.length],
-      borderColor: COLORS[i % COLORS.length]?.replace('0.8', '1'),
-      borderWidth: 1,
-    })),
+    datasets: dataSet.series.map((s, i) => {
+      const bg = s.colors ?? COLORS[i % COLORS.length]!;
+      const border = Array.isArray(bg)
+        ? bg.map((c) => c.replace('0.8', '1'))
+        : (bg as string).replace('0.8', '1');
+      return { label: s.name, data: s.values, backgroundColor: bg, borderColor: border, borderWidth: 1 };
+    }),
   };
 
   const options = {
