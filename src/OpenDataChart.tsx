@@ -35,7 +35,7 @@ const COLORS = [
   'rgba(255, 159, 64, 0.8)',
 ];
 
-export type ChartType = 'bar' | 'line' | 'pie';
+export type ChartType = 'bar' | 'bar-horizontal' | 'line' | 'pie';
 
 export interface OpenDataChartProps {
   dataSet: DataSet;
@@ -75,7 +75,9 @@ export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400
     }),
   };
 
+  const isHorizontal = chartType === 'bar-horizontal';
   const options = {
+    indexAxis: isHorizontal ? ('y' as const) : ('x' as const),
     responsive: true,
     maintainAspectRatio: false,
     plugins: {

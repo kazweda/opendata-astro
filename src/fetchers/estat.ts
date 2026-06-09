@@ -8,6 +8,8 @@ export interface EStatParams {
   seriesKey?: string;
   /** true のとき系列コードを都道府県レベル（\d{2}000、ただし 00000 を除く）に絞り込む */
   prefectureOnly?: boolean;
+  /** true のとき系列コードを市区町村レベル（5桁コードで末尾3桁が 000 でないもの）に絞り込む */
+  municipalityOnly?: boolean;
 }
 
 // e-Stat API v3 レスポンスの必要部分だけ型定義
@@ -72,10 +74,10 @@ export class EStatFetcher implements DataFetcher<EStatParams> {
     }
 
     const json = (await res.json()) as EStatResponse;
-    return this.transform(json, params.seriesKey, params.prefectureOnly);
+    return this.transform(json, params.seriesKey, params.prefectureOnly, params.municipalityOnly);
   }
 
-  private transform(json: EStatResponse, seriesKey?: string, prefectureOnly?: boolean): DataSet {
+  private transform(json: EStatResponse, seriesKey?: string, prefectureOnly?: boolean, municipalityOnly?: boolean): DataSet {
     const statData = json.GET_STATS_DATA.STATISTICAL_DATA;
     const classObjs = toArray(statData.CLASS_INF.CLASS_OBJ);
     const values = toArray(statData.DATA_INF.VALUE);
@@ -93,6 +95,9 @@ export class EStatFetcher implements DataFetcher<EStatParams> {
     let seriesClasses = seriesObj ? toArray(seriesObj.CLASS) : [{ '@code': '', '@name': '値', '@level': '1' }];
     if (prefectureOnly) {
       seriesClasses = seriesClasses.filter((c) => /^\d{2}000$/.test(c['@code']) && c['@code'] !== '00000');
+    }
+    if (municipalityOnly) {
+      seriesClasses = seriesClasses.filter((c) => /^\d{5}$/.test(c['@code']) && !c['@code'].endsWith('000'));
     }
     const catKey = seriesObj ? (`@${seriesObj['@id']}` as keyof EStatValue) : null;
 
