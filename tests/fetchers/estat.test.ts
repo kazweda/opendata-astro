@@ -119,6 +119,31 @@ describe('EStatFetcher', () => {
     expect(result.series[1].values).toEqual([13960000, 14050000]); // 東京都
   });
 
+  describe('municipalityOnly オプション', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponseWithAllAreas),
+      }));
+    });
+
+    it('municipalityOnly: true のとき全国・都道府県を除いた市区町村のみになる', async () => {
+      const fetcher = new EStatFetcher();
+      const result = await fetcher.fetch({ statsDataId: 'DUMMY', seriesKey: 'area', municipalityOnly: true });
+
+      // 全国（00000）・北海道（01000）・東京都（13000）を除いた 札幌市（01100）のみ
+      expect(result.series).toHaveLength(1);
+      expect(result.series.map((s) => s.name)).toEqual(['札幌市']);
+    });
+
+    it('municipalityOnly: false のときフィルタリングしない', async () => {
+      const fetcher = new EStatFetcher();
+      const result = await fetcher.fetch({ statsDataId: 'DUMMY', seriesKey: 'area', municipalityOnly: false });
+
+      expect(result.series).toHaveLength(4); // 全国・北海道・札幌市・東京都
+    });
+  });
+
   describe('prefectureOnly オプション', () => {
     beforeEach(() => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
