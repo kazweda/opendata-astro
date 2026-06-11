@@ -26,6 +26,9 @@ GitHub パッケージとして astro-starlight から利用する。
   APIフェッチをスキップしてキャッシュ済み JSON をそのまま使う
   - これにより CI 環境では `ESTAT_API_KEY` なしでビルドでき、外部APIの障害・レート制限の影響を受けない
   - 最新データに更新したい場合は、該当 JSON を削除してから `npm run dev` / `npm run build` を実行すると再フェッチされる
+  - もしくは `openDataIntegration({ force: true, ... })` を指定する、または環境変数
+    `OPENDATA_ASTRO_FORCE=true` を設定して `npm run build` を実行すると、JSON を削除せずに
+    全データセットを強制的に再フェッチして上書きできる（`force` オプション未指定時のみ環境変数を参照）
 
 ### 使い方のイメージ（MDX / Astroページ内）
 
