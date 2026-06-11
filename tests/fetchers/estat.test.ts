@@ -81,6 +81,60 @@ const mockResponse = {
   },
 };
 
+// CLASS_OBJ・CLASS・VALUE が配列でなく単一オブジェクトで返るケース（要素が1件のみの場合の実APIの挙動）
+const mockResponseSingleObject = {
+  GET_STATS_DATA: {
+    STATISTICAL_DATA: {
+      CLASS_INF: {
+        CLASS_OBJ: {
+          '@id': 'time',
+          '@name': '時間軸',
+          CLASS: { '@code': '2020000000', '@name': '2020年', '@level': '1' },
+        },
+      },
+      DATA_INF: {
+        VALUE: { '@area': '00000', '@time': '2020000000', '$': '126146000' },
+      },
+    },
+  },
+};
+
+// 一部の area×time の組み合わせで値が "-" または欠損のケース
+const mockResponseWithMissingValue = {
+  GET_STATS_DATA: {
+    STATISTICAL_DATA: {
+      CLASS_INF: {
+        CLASS_OBJ: [
+          {
+            '@id': 'area',
+            '@name': '都道府県',
+            CLASS: [
+              { '@code': '01000', '@name': '北海道', '@level': '1' },
+              { '@code': '13000', '@name': '東京都', '@level': '1' },
+            ],
+          },
+          {
+            '@id': 'time',
+            '@name': '時間軸',
+            CLASS: [
+              { '@code': '2020000000', '@name': '2020年', '@level': '1' },
+              { '@code': '2021000000', '@name': '2021年', '@level': '1' },
+            ],
+          },
+        ],
+      },
+      DATA_INF: {
+        VALUE: [
+          { '@area': '01000', '@time': '2020000000', '$': '5224614' },
+          { '@area': '01000', '@time': '2021000000', '$': '-' },
+          { '@area': '13000', '@time': '2020000000', '$': '13960000' },
+          // 東京都の2021年は欠損（VALUEに存在しない）
+        ],
+      },
+    },
+  },
+};
+
 beforeEach(() => {
   process.env['ESTAT_API_KEY'] = 'test-key';
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
@@ -117,6 +171,67 @@ describe('EStatFetcher', () => {
 
     expect(result.series[0].values).toEqual([5224614, 5183687]); // 北海道
     expect(result.series[1].values).toEqual([13960000, 14050000]); // 東京都
+  });
+
+  describe('単一要素のレスポンス（CLASS_OBJ・CLASS・VALUE が配列でなくオブジェクトの場合）', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponseSingleObject),
+      }));
+    });
+
+    it('単一オブジェクトでも配列と同様に扱い、time以外の軸がない場合はデフォルトの「値」系列になる', async () => {
+      const fetcher = new EStatFetcher();
+      const result = await fetcher.fetch({ statsDataId: 'DUMMY' });
+
+      expect(result.labels).toEqual(['2020年']);
+      expect(result.series).toEqual([{ name: '値', values: [126146000] }]);
+    });
+  });
+
+  describe('値が "-" または欠損のケース', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponseWithMissingValue),
+      }));
+    });
+
+    it('値が "-" の場合は0として扱う', async () => {
+      const fetcher = new EStatFetcher();
+      const result = await fetcher.fetch({ statsDataId: 'DUMMY', seriesKey: 'area' });
+
+      expect(result.series[0].values).toEqual([5224614, 0]); // 北海道（2021年が "-"）
+    });
+
+    it('対応するVALUEが存在しない場合は0として扱う', async () => {
+      const fetcher = new EStatFetcher();
+      const result = await fetcher.fetch({ statsDataId: 'DUMMY', seriesKey: 'area' });
+
+      expect(result.series[1].values).toEqual([13960000, 0]); // 東京都（2021年が欠損）
+    });
+  });
+
+  describe('エラーハンドリング', () => {
+    it('ESTAT_API_KEY が未設定の場合はエラーを投げる', async () => {
+      delete process.env['ESTAT_API_KEY'];
+      const fetcher = new EStatFetcher();
+
+      await expect(fetcher.fetch({ statsDataId: 'DUMMY' })).rejects.toThrow('ESTAT_API_KEY is not set');
+    });
+
+    it('e-Stat APIがエラーレスポンスを返した場合はエラーを投げる', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: () => Promise.resolve({}),
+      }));
+      const fetcher = new EStatFetcher();
+
+      await expect(fetcher.fetch({ statsDataId: 'DUMMY' })).rejects.toThrow('e-Stat API error: 500 Internal Server Error');
+    });
   });
 
   describe('municipalityOnly オプション', () => {

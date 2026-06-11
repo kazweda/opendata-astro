@@ -22,6 +22,10 @@ GitHub パッケージとして astro-starlight から利用する。
 - **クライアントサイドでは API を叩かない** — APIキーの露出・CORSを避けるため
 - Astro のビルド時（`astro build`）にデータを取得して静的 JSON に焼き込む
 - コンポーネントはビルド済み JSON を受け取って描画するだけ
+- `outDir`（デフォルト `src/data/opendata-astro`）に `${id}.json` が既に存在する場合は
+  APIフェッチをスキップしてキャッシュ済み JSON をそのまま使う
+  - これにより CI 環境では `ESTAT_API_KEY` なしでビルドでき、外部APIの障害・レート制限の影響を受けない
+  - 最新データに更新したい場合は、該当 JSON を削除してから `npm run dev` / `npm run build` を実行すると再フェッチされる
 
 ### 使い方のイメージ（MDX / Astroページ内）
 
