@@ -61,4 +61,67 @@ describe('openDataIntegration', () => {
     expect(JSON.parse(readFileSync(outPath, 'utf-8'))).toEqual(cached);
     expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Using cached'));
   });
+
+  describe('force オプション', () => {
+    afterEach(() => {
+      delete process.env['OPENDATA_ASTRO_FORCE'];
+    });
+
+    it('force: true の場合、キャッシュが存在しても fetcher.fetch を呼んで上書きする', async () => {
+      const outPath = join(outDir, 'test.json');
+      const cached: DataSet = { labels: ['cached'], series: [] };
+      writeFileSync(outPath, JSON.stringify(cached));
+
+      const fetch = vi.fn().mockResolvedValue(sampleData);
+      const integration = openDataIntegration({
+        datasets: [{ id: 'test', fetcher: { fetch }, params: {} }],
+        outDir,
+        force: true,
+      });
+
+      await integration.hooks['astro:build:start']!({ logger } as never);
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(readFileSync(outPath, 'utf-8'))).toEqual(sampleData);
+    });
+
+    it('OPENDATA_ASTRO_FORCE=true の場合、force オプション未指定でも上書きする', async () => {
+      process.env['OPENDATA_ASTRO_FORCE'] = 'true';
+
+      const outPath = join(outDir, 'test.json');
+      const cached: DataSet = { labels: ['cached'], series: [] };
+      writeFileSync(outPath, JSON.stringify(cached));
+
+      const fetch = vi.fn().mockResolvedValue(sampleData);
+      const integration = openDataIntegration({
+        datasets: [{ id: 'test', fetcher: { fetch }, params: {} }],
+        outDir,
+      });
+
+      await integration.hooks['astro:build:start']!({ logger } as never);
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(readFileSync(outPath, 'utf-8'))).toEqual(sampleData);
+    });
+
+    it('force: false を明示した場合、OPENDATA_ASTRO_FORCE=true でもキャッシュを優先する', async () => {
+      process.env['OPENDATA_ASTRO_FORCE'] = 'true';
+
+      const outPath = join(outDir, 'test.json');
+      const cached: DataSet = { labels: ['cached'], series: [] };
+      writeFileSync(outPath, JSON.stringify(cached));
+
+      const fetch = vi.fn().mockResolvedValue(sampleData);
+      const integration = openDataIntegration({
+        datasets: [{ id: 'test', fetcher: { fetch }, params: {} }],
+        outDir,
+        force: false,
+      });
+
+      await integration.hooks['astro:build:start']!({ logger } as never);
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(JSON.parse(readFileSync(outPath, 'utf-8'))).toEqual(cached);
+    });
+  });
 });

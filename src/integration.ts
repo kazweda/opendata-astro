@@ -14,17 +14,24 @@ export interface OpenDataIntegrationOptions {
   datasets: DatasetConfig<any>[];
   /** JSON の出力先（デフォルト: `src/data/opendata-astro`） */
   outDir?: string;
+  /**
+   * true の場合、`${id}.json` が既に存在してもキャッシュを無視して
+   * 常にAPIフェッチを実行し、JSONを上書き保存する。
+   * 未指定時は環境変数 `OPENDATA_ASTRO_FORCE=true` の値が使われる。
+   */
+  force?: boolean;
 }
 
 async function fetchAndSave(
   datasets: OpenDataIntegrationOptions['datasets'],
   outDir: string,
+  force: boolean,
   log: (msg: string) => void,
 ): Promise<void> {
   mkdirSync(outDir, { recursive: true });
   for (const ds of datasets) {
     const outPath = join(outDir, `${ds.id}.json`);
-    if (existsSync(outPath)) {
+    if (!force && existsSync(outPath)) {
       log(`Using cached: ${outPath}`);
       continue;
     }
@@ -37,15 +44,16 @@ async function fetchAndSave(
 
 export function openDataIntegration(options: OpenDataIntegrationOptions): AstroIntegration {
   const outDir = () => resolve(process.cwd(), options.outDir ?? 'src/data/opendata-astro');
+  const force = options.force ?? process.env['OPENDATA_ASTRO_FORCE'] === 'true';
 
   return {
     name: 'opendata-astro',
     hooks: {
       'astro:build:start': async ({ logger }) => {
-        await fetchAndSave(options.datasets, outDir(), (msg) => logger.info(msg));
+        await fetchAndSave(options.datasets, outDir(), force, (msg) => logger.info(msg));
       },
       'astro:server:start': async ({ logger }) => {
-        await fetchAndSave(options.datasets, outDir(), (msg) => logger.info(msg));
+        await fetchAndSave(options.datasets, outDir(), force, (msg) => logger.info(msg));
       },
     },
   };
