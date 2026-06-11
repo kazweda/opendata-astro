@@ -1,5 +1,5 @@
 import type { AstroIntegration } from 'astro';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { DataFetcher, DataSet } from './fetchers/types';
 
@@ -23,9 +23,13 @@ async function fetchAndSave(
 ): Promise<void> {
   mkdirSync(outDir, { recursive: true });
   for (const ds of datasets) {
+    const outPath = join(outDir, `${ds.id}.json`);
+    if (existsSync(outPath)) {
+      log(`Using cached: ${outPath}`);
+      continue;
+    }
     log(`Fetching: ${ds.id}`);
     const data: DataSet = await ds.fetcher.fetch(ds.params);
-    const outPath = join(outDir, `${ds.id}.json`);
     writeFileSync(outPath, JSON.stringify(data, null, 2));
     log(`Saved: ${outPath}`);
   }
