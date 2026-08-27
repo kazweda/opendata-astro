@@ -259,6 +259,87 @@ describe('EStatFetcher', () => {
     });
   });
 
+  describe('labelsKey オプション', () => {
+    // area を labels、cat01（産業）を series とするレスポンスを模擬
+    const mockResponseIndustryByArea = {
+      GET_STATS_DATA: {
+        STATISTICAL_DATA: {
+          CLASS_INF: {
+            CLASS_OBJ: [
+              {
+                '@id': 'cat01',
+                '@name': '産業',
+                CLASS: [
+                  { '@code': 'AB', '@name': '農林漁業', '@level': '1' },
+                  { '@code': 'E', '@name': '製造業', '@level': '2' },
+                ],
+              },
+              {
+                '@id': 'area',
+                '@name': '都道府県',
+                CLASS: [
+                  { '@code': '00000', '@name': '全国', '@level': '0' },
+                  { '@code': '01000', '@name': '北海道', '@level': '1' },
+                  { '@code': '13000', '@name': '東京都', '@level': '1' },
+                ],
+              },
+              {
+                '@id': 'time',
+                '@name': '時間軸',
+                CLASS: [{ '@code': '2021000000', '@name': '2021年', '@level': '1' }],
+              },
+            ],
+          },
+          DATA_INF: {
+            VALUE: [
+              { '@cat01': 'AB', '@area': '00000', '@time': '2021000000', '$': '1000000' },
+              { '@cat01': 'AB', '@area': '01000', '@time': '2021000000', '$': '28281' },
+              { '@cat01': 'AB', '@area': '13000', '@time': '2021000000', '$': '5000' },
+              { '@cat01': 'E', '@area': '00000', '@time': '2021000000', '$': '9000000' },
+              { '@cat01': 'E', '@area': '01000', '@time': '2021000000', '$': '143726' },
+              { '@cat01': 'E', '@area': '13000', '@time': '2021000000', '$': '300000' },
+            ],
+          },
+        },
+      },
+    };
+
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponseIndustryByArea),
+      }));
+    });
+
+    it('labelsKey: "area" 指定時は都道府県軸を labels、seriesKey の軸を系列にする', async () => {
+      const fetcher = new EStatFetcher();
+      const result = await fetcher.fetch({
+        statsDataId: 'DUMMY',
+        labelsKey: 'area',
+        seriesKey: 'cat01',
+      });
+
+      expect(result.labels).toEqual(['全国', '北海道', '東京都']);
+      expect(result.series).toHaveLength(2);
+      expect(result.series[0]).toEqual({ name: '農林漁業', values: [1000000, 28281, 5000] });
+      expect(result.series[1]).toEqual({ name: '製造業', values: [9000000, 143726, 300000] });
+    });
+
+    it('labelsKey: "area" と prefectureOnly を併用すると labels 側が都道府県のみに絞り込まれる', async () => {
+      const fetcher = new EStatFetcher();
+      const result = await fetcher.fetch({
+        statsDataId: 'DUMMY',
+        labelsKey: 'area',
+        seriesKey: 'cat01',
+        prefectureOnly: true,
+      });
+
+      expect(result.labels).toEqual(['北海道', '東京都']);
+      expect(result.series[0]).toEqual({ name: '農林漁業', values: [28281, 5000] });
+      expect(result.series[1]).toEqual({ name: '製造業', values: [143726, 300000] });
+    });
+  });
+
   describe('prefectureOnly オプション', () => {
     beforeEach(() => {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue({

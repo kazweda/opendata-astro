@@ -6,9 +6,11 @@ export interface EStatParams {
   classFilters?: Record<string, string>;
   /** 系列軸として使う CLASS_OBJ の @id（例: 'area'）。省略時は時間以外の最初の軸を使用 */
   seriesKey?: string;
-  /** true のとき系列コードを都道府県レベル（\d{2}000、ただし 00000 を除く）に絞り込む */
+  /** labels 軸として使う CLASS_OBJ の @id（例: 'area'）。省略時は 'time' を使用（従来通り） */
+  labelsKey?: string;
+  /** true のとき都道府県レベル（\d{2}000、ただし 00000 を除く）に絞り込む。labels 軸・系列軸のうち area 軸である方に適用される */
   prefectureOnly?: boolean;
-  /** true のとき系列コードを市区町村レベル（5桁コードで末尾3桁が 000 でないもの）に絞り込む */
+  /** true のとき市区町村レベル（5桁コードで末尾3桁が 000 でないもの）に絞り込む。labels 軸・系列軸のうち area 軸である方に適用される */
   municipalityOnly?: boolean;
 }
 
@@ -74,38 +76,57 @@ export class EStatFetcher implements DataFetcher<EStatParams> {
     }
 
     const json = (await res.json()) as EStatResponse;
-    return this.transform(json, params.seriesKey, params.prefectureOnly, params.municipalityOnly);
+    return this.transform(json, params.seriesKey, params.labelsKey, params.prefectureOnly, params.municipalityOnly);
   }
 
-  private transform(json: EStatResponse, seriesKey?: string, prefectureOnly?: boolean, municipalityOnly?: boolean): DataSet {
+  private transform(
+    json: EStatResponse,
+    seriesKey?: string,
+    labelsKey?: string,
+    prefectureOnly?: boolean,
+    municipalityOnly?: boolean,
+  ): DataSet {
     const statData = json.GET_STATS_DATA.STATISTICAL_DATA;
     const classObjs = toArray(statData.CLASS_INF.CLASS_OBJ);
     const values = toArray(statData.DATA_INF.VALUE);
 
-    // 時間軸（@time）を labels に使用
-    const timeObj = classObjs.find((o) => o['@id'] === 'time');
-    const timeClasses = timeObj ? toArray(timeObj.CLASS) : [];
-    const labels = timeClasses.map((c) => c['@name']);
-    const timeCodes = timeClasses.map((c) => c['@code']);
+    const filterArea = (classes: EStatClass[]): EStatClass[] => {
+      let filtered = classes;
+      if (prefectureOnly) {
+        filtered = filtered.filter((c) => /^\d{2}000$/.test(c['@code']) && c['@code'] !== '00000');
+      }
+      if (municipalityOnly) {
+        filtered = filtered.filter((c) => /^\d{5}$/.test(c['@code']) && !c['@code'].endsWith('000'));
+      }
+      return filtered;
+    };
 
-    // seriesKey 指定があればその軸、なければ時間以外の最初の分類軸を系列に使用
+    // labelsKey 指定があればその軸、なければ 'time' を labels に使用（従来通り）
+    const labelsAxisId = labelsKey ?? 'time';
+    const labelsObj = classObjs.find((o) => o['@id'] === labelsAxisId);
+    let labelClasses = labelsObj ? toArray(labelsObj.CLASS) : [];
+    if (labelsAxisId === 'area') {
+      labelClasses = filterArea(labelClasses);
+    }
+    const labels = labelClasses.map((c) => c['@name']);
+    const labelCodes = labelClasses.map((c) => c['@code']);
+    const labelKey = labelsObj ? (`@${labelsObj['@id']}` as keyof EStatValue) : null;
+
+    // seriesKey 指定があればその軸、なければ labels 軸以外の最初の分類軸を系列に使用
     const seriesObj = seriesKey
       ? classObjs.find((o) => o['@id'] === seriesKey)
-      : classObjs.find((o) => o['@id'] !== 'time');
+      : classObjs.find((o) => o['@id'] !== labelsAxisId);
     let seriesClasses = seriesObj ? toArray(seriesObj.CLASS) : [{ '@code': '', '@name': '値', '@level': '1' }];
-    if (prefectureOnly) {
-      seriesClasses = seriesClasses.filter((c) => /^\d{2}000$/.test(c['@code']) && c['@code'] !== '00000');
-    }
-    if (municipalityOnly) {
-      seriesClasses = seriesClasses.filter((c) => /^\d{5}$/.test(c['@code']) && !c['@code'].endsWith('000'));
+    if (seriesObj?.['@id'] === 'area') {
+      seriesClasses = filterArea(seriesClasses);
     }
     const catKey = seriesObj ? (`@${seriesObj['@id']}` as keyof EStatValue) : null;
 
     const series = seriesClasses.map((sc) => {
-      const seriesValues = timeCodes.map((tc) => {
+      const seriesValues = labelCodes.map((lc) => {
         const v = values.find(
           (val) =>
-            val['@time'] === tc &&
+            (labelKey === null || val[labelKey] === lc) &&
             (catKey === null || val[catKey] === sc['@code'])
         );
         const raw = v?.['$'] ?? '';
