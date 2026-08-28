@@ -44,6 +44,7 @@ export interface OpenDataChartProps {
   height?: string;
   showLegend?: boolean;
   stacked?: boolean;
+  max?: number;
 }
 
 function useDarkMode(): boolean {
@@ -60,7 +61,7 @@ function useDarkMode(): boolean {
   return isDark;
 }
 
-export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400px', showLegend = true, stacked = false }: OpenDataChartProps) {
+export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400px', showLegend = true, stacked = false, max }: OpenDataChartProps) {
   const isDark = useDarkMode();
   const textColor = isDark ? '#cbd5e1' : '#374151';
   const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
@@ -86,8 +87,8 @@ export function OpenDataChart({ dataSet, chartType = 'bar', title, height = '400
       ...(title ? { title: { display: true, text: title, color: textColor } } : {}),
     },
     scales: {
-      x: { ticks: { color: textColor }, grid: { color: gridColor }, stacked },
-      y: { ticks: { color: textColor }, grid: { color: gridColor }, stacked },
+      x: { ticks: { color: textColor }, grid: { color: gridColor }, stacked, ...(max !== undefined ? { max } : {}) },
+      y: { ticks: { color: textColor }, grid: { color: gridColor }, stacked, ...(max !== undefined ? { max } : {}) },
     },
   };
 
