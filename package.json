@@ -1,9 +1,12 @@
 {
-  "name": "opendata-astro",
+  "name": "@kazweda/opendata-astro",
   "version": "0.1.13",
   "type": "module",
   "description": "Open data chart components for Astro, fetching data at build time.",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
