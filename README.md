@@ -8,11 +8,10 @@
 issue [#59](https://github.com/kazweda/astro-starlight/issues/59)・[#201](https://github.com/kazweda/astro-starlight/issues/201)（e-Stat / 環境省オープンデータのチャート表示）を
 Webサイト管理と切り離すために独立させたリポジトリ。
 
-[scratchblocks-astro](https://github.com/kazweda/scratchblocks-astro) と同じパターンで
-GitHub パッケージとして astro-starlight から利用する。
+npm に `@kazweda/opendata-astro` として公開し、astro-starlight から利用する。
 
-```json
-"opendata-astro": "github:kazweda/opendata-astro#v0.1.0"
+```sh
+npm install @kazweda/opendata-astro
 ```
 
 ## 設計方針
@@ -33,7 +32,7 @@ GitHub パッケージとして astro-starlight から利用する。
 ### 使い方のイメージ（MDX / Astroページ内）
 
 ```mdx
-import { OpenDataChart } from 'opendata-astro';
+import { OpenDataChart } from '@kazweda/opendata-astro';
 
 <OpenDataChart
   statsDataId="0003348423"
@@ -67,9 +66,9 @@ src/
 
 ## astro-starlight との連携
 
-- このパッケージを `github:kazweda/opendata-astro#vX.Y.Z` でインストール
+- このパッケージを `npm install @kazweda/opendata-astro` でインストール
 - `.env` に `ESTAT_API_KEY` を設定
-- MDX or Astroページで `import { OpenDataChart } from 'opendata-astro'` して使う
+- MDX or Astroページで `import { OpenDataChart } from '@kazweda/opendata-astro'` して使う
 
 ## 開発の進め方
 
