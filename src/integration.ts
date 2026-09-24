@@ -3,6 +3,12 @@ import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { DataFetcher, DataSet } from './fetchers/types';
 
+// astro.config から使う分は、このファイルだけで完結させる。
+// ルートの index.ts は OpenDataChart.astro を再 export しており、設定ファイルの読み込み時には解釈できない。
+export { EStatFetcher } from './fetchers/estat';
+export type { EStatParams } from './fetchers/estat';
+export type { DataFetcher, DataSet } from './fetchers/types';
+
 export interface DatasetConfig<P = Record<string, string>> {
   id: string;
   fetcher: DataFetcher<P>;

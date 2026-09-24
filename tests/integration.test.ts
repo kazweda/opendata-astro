@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { openDataIntegration } from '../src/integration';
+import { openDataIntegration, EStatFetcher } from '../src/integration';
+import { EStatFetcher as RootEStatFetcher } from '../src/fetchers/estat';
 import type { DataSet } from '../src/fetchers/types';
 
 const sampleData: DataSet = {
@@ -123,5 +124,16 @@ describe('openDataIntegration', () => {
       expect(fetch).not.toHaveBeenCalled();
       expect(JSON.parse(readFileSync(outPath, 'utf-8'))).toEqual(cached);
     });
+  });
+});
+
+describe('integration entry', () => {
+  it('re-exports EStatFetcher so astro.config does not need the package root', () => {
+    expect(EStatFetcher).toBe(RootEStatFetcher);
+  });
+
+  it('does not import any .astro file', () => {
+    const source = readFileSync(join(__dirname, '../src/integration.ts'), 'utf8');
+    expect(source).not.toMatch(/from '[^']*\.astro'/);
   });
 });

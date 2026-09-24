@@ -31,6 +31,30 @@ npm install @kazweda/opendata-astro
     `OPENDATA_ASTRO_FORCE=true` を設定して `npm run build` を実行すると、JSON を削除せずに
     全データセットを強制的に再フェッチして上書きできる（`force` オプション未指定時のみ環境変数を参照）
 
+### 設定（astro.config.mjs）
+
+`openDataIntegration` に取得するデータセットを渡します。`astro.config.mjs`（とそこから読み込むファイル）では、`EStatFetcher` も含めて `@kazweda/opendata-astro/integration` から import してください。パッケージのルート（`@kazweda/opendata-astro`）は `.astro` コンポーネントを再 export しているため、設定ファイルからは読み込めません。
+
+```js
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import { openDataIntegration, EStatFetcher } from '@kazweda/opendata-astro/integration';
+
+export default defineConfig({
+  integrations: [
+    openDataIntegration({
+      datasets: [
+        {
+          id: 'population',
+          fetcher: new EStatFetcher(),
+          params: { statsDataId: '0003448237', classFilters: { cdArea: '00000' } },
+        },
+      ],
+    }),
+  ],
+});
+```
+
 ### 使い方（MDX / Astroページ内）
 
 ビルド時に保存された JSON を import して `dataSet` に渡します。`client:*` ディレクティブは不要です。

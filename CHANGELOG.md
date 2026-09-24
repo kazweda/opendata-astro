@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-24
+
+### Fixed
+
+- `astro.config.mjs` から使う `EStatFetcher` を `@kazweda/opendata-astro/integration` からも import できるようにしました。0.2.0 ではルートから import すると、再 export している `OpenDataChart.astro` を設定の読み込み時に解釈できず、ビルドが失敗していました。`astro.config` ではルートではなく `/integration` から import してください。([#45](https://github.com/kazweda/opendata-astro/issues/45))
+
 ## [0.2.0] - 2026-09-24
 
 ### Changed
