@@ -1,9 +1,16 @@
 {
   "name": "@kazweda/opendata-astro",
-  "version": "0.1.14",
+  "version": "0.2.0",
   "type": "module",
   "description": "Open data chart components for Astro, fetching data at build time.",
   "license": "MIT",
+  "keywords": [
+    "astro-component",
+    "astro",
+    "opendata",
+    "e-stat",
+    "chart"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -25,20 +32,16 @@
     }
   },
   "peerDependencies": {
-    "astro": "^4 || ^5 || ^6 || ^7",
-    "react": "^18 || ^19",
-    "react-dom": "^18 || ^19"
+    "astro": "^4 || ^5 || ^6 || ^7"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
     "astro": "^7.2.9",
+    "jsdom": "^29.1.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"
   },
   "dependencies": {
-    "chart.js": "^4.5.1",
-    "react-chartjs-2": "^5.3.1"
+    "chart.js": "^4.5.1"
   }
 }
