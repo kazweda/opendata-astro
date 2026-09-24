@@ -36,5 +36,6 @@
 
 0.1.14 以前の変更は [GitHub のコミット履歴](https://github.com/kazweda/opendata-astro/commits/v0.1.14) を参照してください。
 
-[Unreleased]: https://github.com/kazweda/opendata-astro/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kazweda/opendata-astro/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/kazweda/opendata-astro/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kazweda/opendata-astro/compare/v0.1.14...v0.2.0
