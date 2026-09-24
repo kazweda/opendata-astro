@@ -1,5 +1,5 @@
 export type { DataFetcher, DataSet } from './fetchers/types';
 export { EStatFetcher } from './fetchers/estat';
 export type { EStatParams } from './fetchers/estat';
-export { OpenDataChart } from './OpenDataChart';
-export type { OpenDataChartProps, ChartType } from './OpenDataChart';
+export { default as OpenDataChart } from './OpenDataChart.astro';
+export type { OpenDataChartProps, ChartType } from './chart';
